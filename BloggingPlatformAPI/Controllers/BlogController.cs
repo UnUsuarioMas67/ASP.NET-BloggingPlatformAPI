@@ -1,14 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BloggingPlatformAPI.Models;
+using BloggingPlatformAPI.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BloggingPlatformAPI.Controllers;
 
 [ApiController]
-[Route("[controller]/[action]")]
 public class BlogController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult Index()
+    private readonly IPostsService _postsService;
+
+    public BlogController(IPostsService postsService)
     {
-        return Ok("Hello World!");
+        _postsService = postsService;
+    }
+    
+    [HttpPost, Route("posts")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PostModel))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create(RequestPostModel model)
+    {
+        var post = await _postsService.CreatePost(model);
+        return Created($"posts/{post.PostId}", post);
     }
 }
