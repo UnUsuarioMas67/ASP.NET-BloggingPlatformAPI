@@ -1,4 +1,5 @@
-﻿using BloggingPlatformAPI.Models;
+﻿using System.Data;
+using BloggingPlatformAPI.Models;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -65,9 +66,31 @@ SELECT CAST(SCOPE_IDENTITY() as INT)";
         throw new NotImplementedException();
     }
 
-    public Task<PostModel?> GetPost(int id)
+    public async Task<PostModel?> GetPost(int id)
     {
-        throw new NotImplementedException();
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        var posts = (await conn.QueryAsync<PostModel, Category, Tag?, PostModel>("spGetPostRecordsById",
+            (post, category, tag) =>
+            {
+                post.Category = category.CategoryName;
+                post.Tags = new List<string>();
+                
+                if (tag != null)
+                    post.Tags.Add(tag.TagName!);
+                return post;
+            },
+            param: new { Id = id },
+            commandType: CommandType.StoredProcedure,
+            splitOn: "CategoryId, TagId")).ToList();
+
+        var result = posts.FirstOrDefault();
+        if (result is null)
+            return null;
+
+        result.Tags = posts.SelectMany(post => post.Tags).ToList();
+        return result;
     }
 
     public Task<List<PostModel>> GetPosts(string? searchTerm = "")
