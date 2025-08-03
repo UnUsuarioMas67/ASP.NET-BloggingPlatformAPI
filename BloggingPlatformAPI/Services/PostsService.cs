@@ -34,9 +34,9 @@ public class PostsService : IPostsService
         post.Tags.ForEach(tag => dt.Rows.Add(tag));
         
         var spParams = new DynamicParameters();
-        spParams.Add("@Title", post.Title, DbType.StringFixedLength, ParameterDirection.Input);
+        spParams.Add("@Title", post.Title, DbType.String, ParameterDirection.Input);
         spParams.Add("@Content", post.Content, DbType.String, ParameterDirection.Input);
-        spParams.Add("@CategoryName", post.Category, DbType.StringFixedLength, ParameterDirection.Input);
+        spParams.Add("@CategoryName", post.Category, DbType.String, ParameterDirection.Input);
         spParams.Add("@TagsTvp", dt.AsTableValuedParameter("TagsTableType"), direction: ParameterDirection.Input);
         spParams.Add("@PostId", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
