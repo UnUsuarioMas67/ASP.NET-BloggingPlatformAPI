@@ -26,32 +26,22 @@ public class PostsService : IPostsService
 
     public async Task<PostModel> CreatePost(RequestPostModel post)
     {
-        var sql = @"INSERT INTO post (Title, Content, CategoryId) VALUES (@Title, @Content, @CategoryId);
-SELECT CAST(SCOPE_IDENTITY() as INT)";
-
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
-
-        // get category id
-        var spParams = new DynamicParameters();
-        spParams.Add("@CategoryName", post.Category);
-        spParams.Add("@CategoryId", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
-
-        await conn.ExecuteAsync("spAddNewCategory", spParams, commandType: CommandType.StoredProcedure);
-        var categoryId = spParams.Get<int>("@CategoryId");
-
-        // insert post into table
-        var insertParams = new { post.Title, post.Content, CategoryId = categoryId };
-        var postId = await conn.ExecuteScalarAsync<int>(sql, insertParams);
-
-        // add tags
+        
         var dt = new DataTable();
         dt.Columns.Add("TagName");
         post.Tags.ForEach(tag => dt.Rows.Add(tag));
+        
+        var spParams = new DynamicParameters();
+        spParams.Add("@Title", post.Title, DbType.StringFixedLength, ParameterDirection.Input);
+        spParams.Add("@Content", post.Content, DbType.String, ParameterDirection.Input);
+        spParams.Add("@CategoryName", post.Category, DbType.StringFixedLength, ParameterDirection.Input);
+        spParams.Add("@TagsTvp", dt.AsTableValuedParameter("TagsTableType"), direction: ParameterDirection.Input);
+        spParams.Add("@PostId", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
-        await conn.ExecuteAsync("spSetPostTags",
-            new { PostId = postId, Tvp = dt.AsTableValuedParameter("TagsTableType") },
-            commandType: CommandType.StoredProcedure);
+        await conn.ExecuteAsync("spCreatePost", spParams, commandType: CommandType.StoredProcedure);
+        var postId = spParams.Get<int>("@PostId");
 
         return await GetPost(postId) ?? throw new Exception("Failed to create post");
     }

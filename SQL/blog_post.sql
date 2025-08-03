@@ -117,6 +117,27 @@ GO
 */
 
 
+CREATE OR ALTER PROC spCreatePost(
+	@Title VARCHAR(100),
+	@Content VARCHAR(MAX),
+	@CategoryName VARCHAR(50),
+	@TagsTvp TagsTableType READONLY
+)
+AS
+BEGIN 
+	DECLARE @CategoryId INT, @PostId INT
+	EXEC @CategoryId = spAddNewCategory @CategoryName
+
+	INSERT INTO Post (Title, Content, CategoryId) VALUES (@Title, @Content, @CategoryId)
+	SET @PostId = SCOPE_IDENTITY()
+
+	EXEC spSetPostTags @PostId, @TagsTvp
+
+	RETURN @PostId
+END
+GO
+
+
 CREATE OR ALTER PROC spGetPostRecordsById(@Id INT)
 AS
 BEGIN
