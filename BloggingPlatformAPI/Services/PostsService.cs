@@ -25,18 +25,34 @@ public class PostsService : IPostsService
 
     public async Task<PostModel> CreatePost(RequestPostModel post)
     {
-        var sql1 = @"INSERT INTO post (title, content, category) VALUES (@Title, @Content, @Category);
+        var sql = @"INSERT INTO post (title, content, category_id) VALUES (@Title, @Content, @CategoryId);
 SELECT CAST(SCOPE_IDENTITY() as INT)";
-        var parameters = new { Title = post.Title, Content = post.Content, Category = post.Category };
-        
-        var sql2 = @"SELECT post_id as PostId, title, content, category, created_at as CreatedAt, last_updated as LastUpdated  
-FROM post WHERE post_id = @PostId";
 
-        await using var con = new SqlConnection(_connectionString);
-        await con.OpenAsync();
-        var postId = await con.ExecuteScalarAsync<int>(sql1, parameters);
-        var createdPost = await con.QuerySingleAsync<PostModel>(sql2, new { PostId = postId });
-        return createdPost;
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        // get category id
+        var spParams = new DynamicParameters();
+        spParams.Add("@category_name", post.Category);
+        spParams.Add("@CategoryId", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+        await conn.ExecuteAsync("sp_add_new_category", spParams, commandType: CommandType.StoredProcedure);
+        var categoryId = spParams.Get<int>("@CategoryId");
+
+        // insert post into table
+        var insertParams = new { post.Title, post.Content, CategoryId = categoryId };
+        var postId = await conn.ExecuteScalarAsync<int>(sql, insertParams);
+
+        // add tags
+        var dt = new DataTable();
+        dt.Columns.Add("tag_name");
+        post.Tags.ForEach(tag => dt.Rows.Add(tag));
+
+        await conn.ExecuteAsync("sp_set_post_tags",
+            new { post_id = postId, tvp = dt.AsTableValuedParameter("tags_table_type") },
+            commandType: CommandType.StoredProcedure);
+
+        return await GetPost(postId) ?? throw new Exception("Failed to create post");
     }
 
     public Task<PostModel?> UpdatePost(int id, RequestPostModel post)
