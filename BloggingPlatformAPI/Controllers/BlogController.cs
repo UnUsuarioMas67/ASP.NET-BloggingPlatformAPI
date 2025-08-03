@@ -22,4 +22,16 @@ public class BlogController : ControllerBase
         var post = await _postsService.CreatePost(model);
         return Created($"posts/{post.PostId}", post);
     }
+
+    [HttpGet, Route("posts/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PostModel))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var post = await _postsService.GetPost(id);
+        if (post == null)
+            return NotFound();
+        
+        return Ok(post);
+    }
 }
