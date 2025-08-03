@@ -34,4 +34,12 @@ public class BlogController : ControllerBase
         
         return Ok(post);
     }
+    
+    [HttpGet, Route("posts")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<PostModel>))]
+    public async Task<IActionResult> GetPosts(string term = "")
+    {
+        var posts = await _postsService.GetPosts(term);
+        return Ok(posts);
+    }
 }

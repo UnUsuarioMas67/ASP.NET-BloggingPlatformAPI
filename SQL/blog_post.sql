@@ -151,6 +151,21 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROC spGetPostRecords(@SearchTerm VARCHAR(MAX) = '')
+AS
+BEGIN
+    SELECT p.PostId, p.Title, p.Content, p.CreatedAt, p.LastUpdated,
+           c.CategoryId, c.CategoryName, t.TagId, t.TagName
+    FROM post p
+    JOIN category c ON p.CategoryId = c.CategoryId
+    LEFT JOIN post_tag pt ON p.PostId = pt.PostId
+    LEFT JOIN tag t ON pt.TagId = t.TagId
+	WHERE p.Title LIKE CONCAT('%', @SearchTerm, '%')
+		OR p.Content LIKE CONCAT('%', @SearchTerm, '%') 
+		OR c.CategoryName LIKE CONCAT('%', @SearchTerm, '%') 
+END
+GO
+
 /*
 SELECT * FROM post
 SELECT * FROM tag

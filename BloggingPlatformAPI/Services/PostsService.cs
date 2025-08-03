@@ -83,8 +83,32 @@ public class PostsService : IPostsService
         return result;
     }
 
-    public Task<List<PostModel>> GetPosts(string? searchTerm = "")
+    public async Task<List<PostModel>> GetPosts(string? searchTerm = "")
     {
-        throw new NotImplementedException();
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        var posts = await conn.QueryAsync<PostModel, Category, Tag?, PostModel>("spGetPostRecords",
+            (post, category, tag) =>
+            {
+                post.Category = category.CategoryName;
+                post.Tags = new List<string>();
+
+                if (tag != null)
+                    post.Tags.Add(tag.TagName!);
+                return post;
+            },
+            param: new { SearchTerm = searchTerm },
+            commandType: CommandType.StoredProcedure,
+            splitOn: "CategoryId, TagId");
+        
+        var result = posts.GroupBy(post => post.PostId).Select(group =>
+        {
+            var groupedPost = group.First();
+            groupedPost.Tags = group.SelectMany(post => post.Tags).ToList();
+            return groupedPost;
+        }).ToList();
+
+        return result;
     }
 }
