@@ -6,32 +6,32 @@ CREATE DATABASE blog_post
 GO
 USE blog_post
 
-CREATE TABLE tag (
-	tag_id INT PRIMARY KEY IDENTITY(1,1),
-	tag_name VARCHAR(50) NOT NULL
+CREATE TABLE Tag (
+	TagId INT PRIMARY KEY IDENTITY(1,1),
+	TagName VARCHAR(50) NOT NULL
 )
 
-CREATE TABLE category (
-	category_id INT PRIMARY KEY IDENTITY(1,1),
-	category_name VARCHAR(50) NOT NULL
+CREATE TABLE Category (
+	CategoryId INT PRIMARY KEY IDENTITY(1,1),
+	CategoryName VARCHAR(50) NOT NULL
 )
 
-CREATE TABLE post (
-	post_id INT PRIMARY KEY IDENTITY(1,1),
-	title VARCHAR(100) NOT NULL,
-	content VARCHAR(MAX) NOT NULL,
-	category_id INT NOT NULL,
-	created_at DATETIME NOT NULL DEFAULT GETDATE(),
-	last_updated DATETIME DEFAULT NULL
+CREATE TABLE Post (
+	PostId INT PRIMARY KEY IDENTITY(1,1),
+	Title VARCHAR(100) NOT NULL,
+	Content VARCHAR(MAX) NOT NULL,
+	CategoryId INT NOT NULL,
+	CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+	LastUpdated DATETIME DEFAULT NULL
 
-	FOREIGN KEY (category_id) REFERENCES category(category_id)
+	FOREIGN KEY (CategoryId) REFERENCES category(CategoryId)
 ) 
 
-CREATE TABLE post_tag (
-	post_id INT FOREIGN KEY REFERENCES post(post_id),
-	tag_id INT FOREIGN KEY REFERENCES tag(tag_id),
+CREATE TABLE Post_Tag (
+	PostId INT FOREIGN KEY REFERENCES post(PostId),
+	TagId INT FOREIGN KEY REFERENCES tag(TagId),
 
-	PRIMARY KEY (post_id, tag_id)
+	PRIMARY KEY (PostId, TagId)
 )
 GO
 
@@ -48,33 +48,33 @@ END
 GO
 */
 
-CREATE TYPE tags_table_type 
+CREATE TYPE TagsTableType 
 AS TABLE
-(tag_name VARCHAR(50))
+(TagName VARCHAR(50))
 GO
 
-CREATE OR ALTER PROC sp_set_post_tags(@post_id INT, @tvp tags_table_type READONLY)
+CREATE OR ALTER PROC spSetPostTags(@PostId INT, @Tvp TagsTableType READONLY)
 AS
 BEGIN
 	SET NOCOUNT ON
 
 	-- Clear all tags from post
-	DELETE FROM post_tag WHERE post_id = @post_id
+	DELETE FROM Post_Tag WHERE PostId = @PostId
 
 	-- Insert tag_names that don't exists in tag table
 	INSERT INTO tag
-	SELECT tvp.tag_name 
-	FROM @tvp tvp
-	LEFT JOIN tag t ON UPPER(tvp.tag_name) = UPPER(t.tag_name)
-	WHERE t.tag_name IS NULL
+	SELECT tvp.TagName 
+	FROM @Tvp tvp
+	LEFT JOIN tag t ON UPPER(tvp.TagName) = UPPER(t.TagName)
+	WHERE t.TagName IS NULL
 
-	SELECT t.tag_id 
+	SELECT t.TagId 
 	INTO #temp -- Create temp table with ids
 	FROM tag t 
-	JOIN @tvp tvp ON UPPER(tvp.tag_name) = UPPER(t.tag_name)
+	JOIN @Tvp tvp ON UPPER(tvp.TagName) = UPPER(t.TagName)
 
 	INSERT INTO post_tag
-	SELECT @post_id, tag_id FROM #temp
+	SELECT @PostId, TagId FROM #temp
 END
 GO
 
@@ -89,20 +89,20 @@ GO
 */
 
 
-CREATE OR ALTER PROC sp_add_new_category(@category_name VARCHAR(50))
+CREATE OR ALTER PROC spAddNewCategory(@CategoryName VARCHAR(50))
 AS
 BEGIN
-	DECLARE @category_id INT
+	DECLARE @CategoryId INT
 	SET NOCOUNT ON
-	IF UPPER(@category_name) IN (SELECT UPPER(category_name) FROM category)
-		SET @category_id = (SELECT TOP 1 category_id FROM category WHERE UPPER(category_name) = UPPER(@category_name))
+	IF UPPER(@CategoryName) IN (SELECT UPPER(CategoryName) FROM category)
+		SET @CategoryId = (SELECT TOP 1 CategoryId FROM category WHERE UPPER(CategoryName) = UPPER(@CategoryName))
 	ELSE
 		BEGIN
-			INSERT INTO category VALUES (@category_name)
-			SET @category_id = SCOPE_IDENTITY()
+			INSERT INTO category VALUES (@CategoryName)
+			SET @CategoryId = SCOPE_IDENTITY()
 		END
 
-	RETURN @category_id
+	RETURN @CategoryId
 END
 GO
 
@@ -120,13 +120,13 @@ GO
 CREATE OR ALTER PROC spGetPostRecordsById(@Id INT)
 AS
 BEGIN
-	SELECT p.post_id AS PostId, p.title, p.content, p.created_at AS CreatedAt, p.last_updated AS LastUpdated, 
-		c.category_id AS CategoryId, c.category_name AS CategoryName, t.tag_id AS TagId, t.tag_name AS TagName
+	SELECT p.PostId, p.Title, p.Content, p.CreatedAt, p.LastUpdated, 
+		c.CategoryId, c.CategoryName, t.TagId, t.TagName
 	FROM post p
-	JOIN category c ON p.category_id = c.category_id
-	LEFT JOIN post_tag pt ON p.post_id = pt.post_id
-	LEFT JOIN tag t ON pt.tag_id = t.tag_id
-	WHERE p.post_id = @Id
+	JOIN category c ON p.CategoryId = c.CategoryId
+	LEFT JOIN post_tag pt ON p.PostId = pt.PostId
+	LEFT JOIN tag t ON pt.TagId = t.TagId
+	WHERE p.PostId = @Id
 END
 GO
 
@@ -136,5 +136,5 @@ SELECT * FROM tag
 SELECT * FROM post_tag
 SELECT * FROM category
 
-EXEC spGetPostRecordsById 6
+EXEC spGetPostRecordsById 10
 */

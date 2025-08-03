@@ -26,7 +26,7 @@ public class PostsService : IPostsService
 
     public async Task<PostModel> CreatePost(RequestPostModel post)
     {
-        var sql = @"INSERT INTO post (title, content, category_id) VALUES (@Title, @Content, @CategoryId);
+        var sql = @"INSERT INTO post (Title, Content, CategoryId) VALUES (@Title, @Content, @CategoryId);
 SELECT CAST(SCOPE_IDENTITY() as INT)";
 
         await using var conn = new SqlConnection(_connectionString);
@@ -34,10 +34,10 @@ SELECT CAST(SCOPE_IDENTITY() as INT)";
 
         // get category id
         var spParams = new DynamicParameters();
-        spParams.Add("@category_name", post.Category);
+        spParams.Add("@CategoryName", post.Category);
         spParams.Add("@CategoryId", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
-        await conn.ExecuteAsync("sp_add_new_category", spParams, commandType: CommandType.StoredProcedure);
+        await conn.ExecuteAsync("spAddNewCategory", spParams, commandType: CommandType.StoredProcedure);
         var categoryId = spParams.Get<int>("@CategoryId");
 
         // insert post into table
@@ -46,11 +46,11 @@ SELECT CAST(SCOPE_IDENTITY() as INT)";
 
         // add tags
         var dt = new DataTable();
-        dt.Columns.Add("tag_name");
+        dt.Columns.Add("TagName");
         post.Tags.ForEach(tag => dt.Rows.Add(tag));
 
-        await conn.ExecuteAsync("sp_set_post_tags",
-            new { post_id = postId, tvp = dt.AsTableValuedParameter("tags_table_type") },
+        await conn.ExecuteAsync("spSetPostTags",
+            new { PostId = postId, Tvp = dt.AsTableValuedParameter("TagsTableType") },
             commandType: CommandType.StoredProcedure);
 
         return await GetPost(postId) ?? throw new Exception("Failed to create post");
