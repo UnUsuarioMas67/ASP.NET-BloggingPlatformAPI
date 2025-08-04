@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BloggingPlatformAPI.Controllers;
 
 [ApiController]
+[Route("posts")]
 public class BlogController : ControllerBase
 {
     private readonly IPostsService _postsService;
@@ -14,7 +15,7 @@ public class BlogController : ControllerBase
         _postsService = postsService;
     }
     
-    [HttpPost, Route("posts")]
+    [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PostModel))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(RequestPostModel model)
@@ -23,7 +24,7 @@ public class BlogController : ControllerBase
         return Created($"posts/{post.PostId}", post);
     }
 
-    [HttpGet, Route("posts/{id}")]
+    [HttpGet, Route("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PostModel))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
@@ -32,7 +33,7 @@ public class BlogController : ControllerBase
         return post != null ? Ok(post) : NotFound();
     }
     
-    [HttpGet, Route("posts")]
+    [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<PostModel>))]
     public async Task<IActionResult> GetPosts(string term = "")
     {
@@ -40,7 +41,7 @@ public class BlogController : ControllerBase
         return Ok(posts);
     }
 
-    [HttpPut, Route("posts/{id}")]
+    [HttpPut, Route("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PostModel))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -48,5 +49,14 @@ public class BlogController : ControllerBase
     {
         var post = await _postsService.UpdatePost(id, model);
         return post != null ? Ok(post) : NotFound();
+    }
+
+    [HttpDelete, Route("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result =  await _postsService.DeletePost(id);
+        return result ? NoContent() : NotFound();
     }
 }

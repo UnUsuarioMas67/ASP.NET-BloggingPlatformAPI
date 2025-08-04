@@ -90,6 +90,7 @@ CREATE OR ALTER PROC spCreatePost(
 )
 AS
 BEGIN 
+	SET NOCOUNT ON
 	DECLARE @CategoryId INT, @PostId INT
 	EXEC @CategoryId = spAddNewCategory @CategoryName
 
@@ -112,6 +113,8 @@ CREATE OR ALTER PROC spUpdatePost(
 )
 AS
 BEGIN
+	SET NOCOUNT ON
+
 	DECLARE @Result BIT
 
 	IF EXISTS (SELECT * FROM Post WHERE PostId = @PostId)
@@ -161,3 +164,27 @@ BEGIN
 		OR c.CategoryName LIKE CONCAT('%', @SearchTerm, '%') 
 END
 GO
+
+
+CREATE OR ALTER PROC spDeletePost(@PostId INT)
+AS
+BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @Result BIT
+
+	IF EXISTS (SELECT * FROM Post WHERE PostId = @PostId)
+		BEGIN
+			-- Delete related Post_Tag records
+			DELETE FROM Post_Tag WHERE PostId = @PostId
+
+			-- Delete Post record
+			DELETE FROM Post WHERE PostId = @PostId
+			
+			SET @Result = 1
+		END
+	ELSE
+		SET @Result = 0
+	
+	RETURN @Result
+END

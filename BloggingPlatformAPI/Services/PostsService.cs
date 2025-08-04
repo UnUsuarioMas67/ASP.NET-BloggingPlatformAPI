@@ -28,11 +28,11 @@ public class PostsService : IPostsService
     {
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
-        
+
         var dt = new DataTable();
         dt.Columns.Add("TagName");
         post.Tags.ForEach(tag => dt.Rows.Add(tag));
-        
+
         var spParams = new DynamicParameters();
         spParams.Add("@Title", post.Title, DbType.String, ParameterDirection.Input);
         spParams.Add("@Content", post.Content, DbType.String, ParameterDirection.Input);
@@ -50,11 +50,11 @@ public class PostsService : IPostsService
     {
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
-        
+
         var dt = new DataTable();
         dt.Columns.Add("TagName");
         post.Tags.ForEach(tag => dt.Rows.Add(tag));
-        
+
         var spParams = new DynamicParameters();
         spParams.Add("@PostId", id, DbType.Int32, ParameterDirection.Input);
         spParams.Add("@Title", post.Title, DbType.String, ParameterDirection.Input);
@@ -64,7 +64,7 @@ public class PostsService : IPostsService
         spParams.Add("@Result", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
         await conn.ExecuteAsync("spUpdatePost", spParams, commandType: CommandType.StoredProcedure);
-        
+
         var success = spParams.Get<int>("@Result");
         if (success == 0)
             return null;
@@ -72,9 +72,19 @@ public class PostsService : IPostsService
         return await GetPost(id) ?? throw new Exception("Failed to update post");
     }
 
-    public Task<bool> DeletePost(int id)
+    public async Task<bool> DeletePost(int id)
     {
-        throw new NotImplementedException();
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        var spParams = new DynamicParameters();
+        spParams.Add("@PostId", id, DbType.Int32, ParameterDirection.Input);
+        spParams.Add("@Result", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+        await conn.ExecuteAsync("spDeletePost", spParams, commandType: CommandType.StoredProcedure);
+        var success = spParams.Get<int>("@Result");
+        
+        return success != 0;
     }
 
     public async Task<PostModel?> GetPost(int id)
@@ -87,7 +97,7 @@ public class PostsService : IPostsService
             {
                 post.Category = category.CategoryName;
                 post.Tags = new List<string>();
-                
+
                 if (tag != null)
                     post.Tags.Add(tag.TagName!);
                 return post;
@@ -122,7 +132,7 @@ public class PostsService : IPostsService
             param: new { SearchTerm = searchTerm },
             commandType: CommandType.StoredProcedure,
             splitOn: "CategoryId, TagId");
-        
+
         var result = posts.GroupBy(post => post.PostId).Select(group =>
         {
             var groupedPost = group.First();
