@@ -35,19 +35,6 @@ CREATE TABLE Post_Tag (
 )
 GO
 
-/*
-CREATE OR ALTER TRIGGER tr_update_post ON post
-FOR UPDATE
-AS BEGIN
-	SET NOCOUNT ON
-	UPDATE post
-	SET last_updated = GETDATE()
-	FROM post p
-	JOIN inserted i ON i.post_id = p.post_id
-END
-GO
-*/
-
 CREATE TYPE TagsTableType 
 AS TABLE
 (TagName VARCHAR(50))
@@ -78,17 +65,6 @@ BEGIN
 END
 GO
 
-/*
-DECLARE @post_id INT, @tvp tags_table_type
-SET @post_id = 1
-INSERT INTO @tvp
-VALUES ('reading'), ('books'), ('stuff')
-
-EXEC sp_set_post_tags @post_id, @tvp
-GO
-*/
-
-
 CREATE OR ALTER PROC spAddNewCategory(@CategoryName VARCHAR(50))
 AS
 BEGIN
@@ -105,17 +81,6 @@ BEGIN
 	RETURN @CategoryId
 END
 GO
-
-/*
-DECLARE @category_id INT
-EXEC @category_id = sp_add_new_category 'Literature'
-
-INSERT INTO post(title, content, category_id)
-VALUES
-('Best books of 2025', 'content', @category_id)
-GO
-*/
-
 
 CREATE OR ALTER PROC spCreatePost(
 	@Title VARCHAR(100),
@@ -134,6 +99,37 @@ BEGIN
 	EXEC spSetPostTags @PostId, @TagsTvp
 
 	RETURN @PostId
+END
+GO
+
+
+CREATE OR ALTER PROC spUpdatePost(
+	@PostId INT,
+	@Title VARCHAR(100),
+	@Content VARCHAR(MAX),
+	@CategoryName VARCHAR(50),
+	@TagsTvp TagsTableType READONLY
+)
+AS
+BEGIN
+	DECLARE @Result BIT
+
+	IF EXISTS (SELECT * FROM Post WHERE PostId = @PostId)
+		BEGIN
+			DECLARE @CategoryId INT
+			EXEC @CategoryId = spAddNewCategory @CategoryName
+
+			UPDATE Post
+			SET Title = @Title, Content = @Content, CategoryId = @CategoryId, LastUpdated = GETDATE()
+			WHERE PostId = @PostId
+
+			EXEC spSetPostTags @PostId, @TagsTvp
+			SET @Result = 1
+		END
+	ELSE
+		SET @Result = 0
+	
+	RETURN @Result
 END
 GO
 
@@ -165,12 +161,3 @@ BEGIN
 		OR c.CategoryName LIKE CONCAT('%', @SearchTerm, '%') 
 END
 GO
-
-/*
-SELECT * FROM post
-SELECT * FROM tag
-SELECT * FROM post_tag
-SELECT * FROM category
-
-EXEC spGetPostRecordsById 10
-*/

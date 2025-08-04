@@ -46,9 +46,30 @@ public class PostsService : IPostsService
         return await GetPost(postId) ?? throw new Exception("Failed to create post");
     }
 
-    public Task<PostModel?> UpdatePost(int id, RequestPostModel post)
+    public async Task<PostModel?> UpdatePost(int id, RequestPostModel post)
     {
-        throw new NotImplementedException();
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+        
+        var dt = new DataTable();
+        dt.Columns.Add("TagName");
+        post.Tags.ForEach(tag => dt.Rows.Add(tag));
+        
+        var spParams = new DynamicParameters();
+        spParams.Add("@PostId", id, DbType.Int32, ParameterDirection.Input);
+        spParams.Add("@Title", post.Title, DbType.String, ParameterDirection.Input);
+        spParams.Add("@Content", post.Content, DbType.String, ParameterDirection.Input);
+        spParams.Add("@CategoryName", post.Category, DbType.String, ParameterDirection.Input);
+        spParams.Add("@TagsTvp", dt.AsTableValuedParameter("TagsTableType"), direction: ParameterDirection.Input);
+        spParams.Add("@Result", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+        await conn.ExecuteAsync("spUpdatePost", spParams, commandType: CommandType.StoredProcedure);
+        
+        var success = spParams.Get<int>("@Result");
+        if (success == 0)
+            return null;
+
+        return await GetPost(id) ?? throw new Exception("Failed to update post");
     }
 
     public Task<bool> DeletePost(int id)
@@ -83,7 +104,7 @@ public class PostsService : IPostsService
         return result;
     }
 
-    public async Task<List<PostModel>> GetPosts(string? searchTerm = "")
+    public async Task<List<PostModel>> GetPosts(string searchTerm = "")
     {
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();

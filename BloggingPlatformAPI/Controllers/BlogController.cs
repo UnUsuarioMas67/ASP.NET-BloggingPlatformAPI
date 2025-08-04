@@ -29,10 +29,7 @@ public class BlogController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var post = await _postsService.GetPost(id);
-        if (post == null)
-            return NotFound();
-        
-        return Ok(post);
+        return post != null ? Ok(post) : NotFound();
     }
     
     [HttpGet, Route("posts")]
@@ -41,5 +38,15 @@ public class BlogController : ControllerBase
     {
         var posts = await _postsService.GetPosts(term);
         return Ok(posts);
+    }
+
+    [HttpPut, Route("posts/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PostModel))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(int id, RequestPostModel model)
+    {
+        var post = await _postsService.UpdatePost(id, model);
+        return post != null ? Ok(post) : NotFound();
     }
 }
