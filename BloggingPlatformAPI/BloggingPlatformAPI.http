@@ -1,6 +1,90 @@
 @BloggingPlatformAPI_HostAddress = http://localhost:5191
 
-GET {{BloggingPlatformAPI_HostAddress}}/api/Blog/helloworld
+GET {{BloggingPlatformAPI_HostAddress}}/posts
 Accept: application/json
 
 ###
+
+POST {{BloggingPlatformAPI_HostAddress}}/posts
+Content-Type: application/json
+
+{
+  "title": "untitled",
+  "content": "lorem ipsum dies irae",
+  "category": "Comedy",
+  "tags": ["xD"]
+}
+
+###
+
+POST {{BloggingPlatformAPI_HostAddress}}/posts
+Content-Type: application/json
+
+{
+  "title": "post without tags",
+  "content": "lorem ipsum dies irae",
+  "category": "No Tags"
+}
+
+###
+
+POST {{BloggingPlatformAPI_HostAddress}}/posts
+Content-Type: application/json
+
+{
+  "title": "Gaming is DEAD",
+  "content": "lorem ipsum dies irae",
+  "category": "Gaming",
+  "tags": ["video games", "death", "clickbait", "gamers"]
+}
+
+###
+
+GET {{BloggingPlatformAPI_HostAddress}}/posts/8
+Accept: application/json
+
+###
+
+GET {{BloggingPlatformAPI_HostAddress}}/posts
+Accept: application/json
+
+###
+
+PUT {{BloggingPlatformAPI_HostAddress}}/posts/7
+Accept: application/json
+Content-Type: application/json
+
+{
+  "title": "Gaming is DEAD",
+  "content": "lorem ipsum dies irae",
+  "category": "Gaming"
+}
+
+###
+
+PUT {{BloggingPlatformAPI_HostAddress}}/posts/9
+Accept: application/json
+Content-Type: application/json
+
+{
+  "title": "untitled",
+  "content": "lorem ipsum dies irae",
+  "category": "Comedy",
+  "tags": [
+    "xD"
+  ]
+}
+
+###
+
+DELETE {{BloggingPlatformAPI_HostAddress}}/posts/2
+
+###
+
+GET {{BloggingPlatformAPI_HostAddress}}/posts/12
+Accept: application/json
+
+###
+
+GET {{BloggingPlatformAPI_HostAddress}}/posts?term=tags
+Accept: application/json
