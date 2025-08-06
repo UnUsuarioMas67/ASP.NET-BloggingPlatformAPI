@@ -69,7 +69,7 @@ POST /posts
 
 ```
 {
-  "id": 1,
+  "postId": 1,
   "title": "My Title",
   "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer a.",
   "category": "MyCategory",
@@ -97,7 +97,7 @@ PUT /posts/1
 
 ```
 {
-  "id": 1,
+  "postId": 1,
   "title": "Updated Title",
   "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer a.",
   "category": "Updated Category",
@@ -125,7 +125,7 @@ GET /posts/1
 
 ```
 {
-  "id": 1,
+  "postId": 1,
   "title": "Updated Title",
   "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer a.",
   "category": "Updated Category",
@@ -142,7 +142,7 @@ Get all blog posts using the `GET` method
 GET /posts
 ```
 
-Retrieve blog posts filterd by a search term
+Retrieve blog posts filtered by a search term
 ```
 GET /posts?term=title
 ```
@@ -152,7 +152,7 @@ GET /posts?term=title
 ```
 [
     {
-      "id": 1,
+      "postId": 1,
       "title": "My Title",
       "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer a.",
       "category": "MyCategory",
@@ -161,7 +161,7 @@ GET /posts?term=title
       "lastUpdated": "2025-08-03T23:47:38.927"
     },
     {
-      "id": 2,
+      "postId": 2,
       "title": "Second Post",
       "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer a.",
       "category": "AnotherCategory",
