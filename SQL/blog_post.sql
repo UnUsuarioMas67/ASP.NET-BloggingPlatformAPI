@@ -48,7 +48,7 @@ BEGIN
 	-- Clear all tags from post
 	DELETE FROM Post_Tag WHERE PostId = @PostId
 
-	-- Insert tag_names that don't exists in tag table
+	-- Insert tag_names that don't exist in tag table
 	INSERT INTO tag
 	SELECT tvp.TagName 
 	FROM @Tvp tvp
